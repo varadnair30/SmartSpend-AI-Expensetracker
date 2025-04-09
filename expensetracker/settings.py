@@ -173,3 +173,13 @@ CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
 
 # Ensure WhiteNoise is used to serve static files in production
 WHITENOISE_USE_FINDERS = True
+
+
+
+
+
+
+
+
+
+
