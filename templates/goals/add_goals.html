@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto p-6 bg-white dark:bg-zinc-900 shadow rounded">
+    <h2 class="text-2xl font-bold mb-6 text-gray-800 dark:text-white">Add Goal</h2>
+    <form method="post" class="space-y-4">
+        {% csrf_token %}
+        <div>
+            <label for="{{ form.name.id_for_label }}" class="block font-medium text-gray-700 dark:text-gray-300">Goal Name</label>
+            {{ form.name|add_class:"w-full p-2 rounded border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white" }}
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+                <label for="{{ form.start_date.id_for_label }}" class="block font-medium text-gray-700 dark:text-gray-300">Start Date</label>
+                <input type="date" name="start_date" class="w-full p-2 rounded border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white" />
+            </div>
+            <div>
+                <label for="{{ form.end_date.id_for_label }}" class="block font-medium text-gray-700 dark:text-gray-300">End Date</label>
+                <input type="date" name="end_date" class="w-full p-2 rounded border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white" />
+            </div>
+        </div>
+
+        <div>
+            <label for="{{ form.amount_to_save.id_for_label }}" class="block font-medium text-gray-700 dark:text-gray-300">Amount to Save</label>
+            {{ form.amount_to_save|add_class:"w-full p-2 rounded border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white" }}
+        </div>
+
+        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded">
+            Add Goal
+        </button>
+    </form>
+</div>
+{% endblock %}

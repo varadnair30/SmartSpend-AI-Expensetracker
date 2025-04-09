@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="p-6">
+  <!-- Breadcrumb & Add Income -->
+  <div class="flex flex-col md:flex-row justify-between items-center mb-6">
+    <nav class="mb-2 md:mb-0">
+      <ol class="flex text-sm text-gray-600 dark:text-gray-300 space-x-2">
+        <li><a href="#" class="hover:underline">Income</a></li>
+        <li>/</li>
+        <li class="text-purple-600 dark:text-purple-400 font-semibold">My Income</li>
+      </ol>
+    </nav>
+    <a href="{% url 'add-income' %}" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-4 py-2 rounded shadow transition">
+      Add Income
+    </a>
+  </div>
+
+  {% include 'partials/_messages.html' %}
+
+  {% if income.count %}
+  <!-- Search -->
+  <div class="mb-4 flex justify-end">
+    <input id="searchField" type="text"
+      class="w-full md:w-1/3 px-4 py-2 rounded border border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-gray-800 dark:text-gray-100 shadow"
+      placeholder="Search...">
+  </div>
+
+  <!-- Income Table -->
+  <div class="overflow-x-auto rounded shadow">
+    <table class="min-w-full border border-gray-200 dark:border-zinc-700 divide-y divide-gray-200 dark:divide-zinc-700 text-sm">
+      <thead class="bg-purple-600 text-white">
+        <tr>
+          <th class="px-4 py-2 text-left">Amount ({{currency}})
+            <a href="?sort=amount_asc">⬆️</a> <a href="?sort=amount_desc">⬇️</a>
+          </th>
+          <th class="px-4 py-2 text-left">Source</th>
+          <th class="px-4 py-2 text-left">Description</th>
+          <th class="px-4 py-2 text-left">Date
+            <a href="?sort=date_asc">⬆️</a> <a href="?sort=date_desc">⬇️</a>
+          </th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody class="bg-white dark:bg-zinc-900 text-gray-800 dark:text-gray-100">
+        {% for income in page_obj %}
+        <tr class="hover:bg-purple-50 dark:hover:bg-zinc-800 transition">
+          <td class="px-4 py-2">{{ income.amount }}</td>
+          <td class="px-4 py-2">{{ income.source }}</td>
+          <td class="px-4 py-2">{{ income.description }}</td>
+          <td class="px-4 py-2">{{ income.date }}</td>
+          <td class="px-4 py-2">
+            <a href="{% url 'income-edit' income.id %}"
+              class="inline-block px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded text-xs font-semibold transition">
+              Edit
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- No Results -->
+  <p class="no-results hidden mt-4 text-red-500">No results</p>
+
+  <!-- Pagination -->
+  <div class="mt-6 flex justify-between items-center text-sm">
+    <span class="text-gray-600 dark:text-gray-300">
+      Showing page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+    </span>
+
+    <ul class="flex space-x-2">
+      {% if page_obj.has_previous %}
+      <li>
+        <a href="?page=1{% if sort_order %}&sort={{ sort_order }}{% endif %}"
+          class="px-3 py-1 bg-zinc-200 dark:bg-zinc-800 rounded hover:bg-purple-600 hover:text-white transition">
+          &laquo; 1
+        </a>
+      </li>
+      <li>
+        <a href="?page={{ page_obj.previous_page_number }}{% if sort_order %}&sort={{ sort_order }}{% endif %}"
+          class="px-3 py-1 bg-zinc-200 dark:bg-zinc-800 rounded hover:bg-purple-600 hover:text-white transition">
+          Previous
+        </a>
+      </li>
+      {% endif %}
+
+      {% if page_obj.has_next %}
+      <li>
+        <a href="?page={{ page_obj.next_page_number }}{% if sort_order %}&sort={{ sort_order }}{% endif %}"
+          class="px-3 py-1 bg-zinc-200 dark:bg-zinc-800 rounded hover:bg-purple-600 hover:text-white transition">
+          Next
+        </a>
+      </li>
+      <li>
+        <a href="?page={{ page_obj.paginator.num_pages }}{% if sort_order %}&sort={{ sort_order }}{% endif %}"
+          class="px-3 py-1 bg-zinc-200 dark:bg-zinc-800 rounded hover:bg-purple-600 hover:text-white transition">
+          {{ page_obj.paginator.num_pages }} &raquo;
+        </a>
+      </li>
+      {% endif %}
+    </ul>
+  </div>
+  {% endif %}
+</div>
+
+<script src="{% static 'js/searchIncome.js' %}"></script>
+{% endblock content %}

@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<!-- Add Custom CSS -->
+{% block css %}
+<style>
+    /* Custom styles for expense edit buttons */
+    .btn {
+        border-radius: 8px;
+        padding: 12px 24px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        width: 100%;
+    }
+
+    .btn-primary {
+        background-color: #4F46E5;
+        color: white;
+        border: none;
+    }
+
+    .btn-primary:hover {
+        background-color: #4338CA;
+        cursor: pointer;
+    }
+
+    .btn-danger {
+        background-color: #F87171;
+        color: white;
+        border: none;
+    }
+
+    .btn-danger:hover {
+        background-color: #F44336;
+        cursor: pointer;
+    }
+</style>
+{% endblock css %}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item">
+                        <a href="{% url 'expenses'%}" class="text-indigo-600">Expenses</a>
+                    </li>
+                    <li class="breadcrumb-item active" aria-current="page"><br>
+                        Edit Expense
+                    </li>
+                </ol>
+            </nav>
+            <div class="card shadow-lg p-4 rounded-lg">
+                <div class="card-body">
+                    <form action="{% url 'expense-edit' expense.id %}" method="post">
+                        {% include 'partials/_messages.html'%}
+                        {% csrf_token %}
+                        
+                        <!-- Amount Field -->
+                        <div class="form-group mb-4">
+                            <label for="amount" class="font-semibold text-gray-700">Amount</label>
+                            <input type="text" class="form-control form-control-lg rounded-lg p-3" name="amount" value="{{values.amount}}" placeholder="Enter amount" required />
+                        </div>
+
+                        <!-- Description Field -->
+                        <div class="form-group mb-4">
+                            <label for="description" class="font-semibold text-gray-700">Description</label>
+                            <input type="text" class="form-control form-control-lg rounded-lg p-3" name="description" value="{{values.description}}" placeholder="Enter description" required />
+                        </div>
+
+                        <!-- Category Field -->
+                        <div class="form-group mb-4">
+                            <label for="category" class="font-semibold text-gray-700">Category</label>
+                            <input type="text" class="form-control form-control-lg rounded-lg p-3" name="category" value="{{values.category}}" placeholder="Enter category" required />
+                        </div>
+
+                        <!-- Date Field -->
+                        <div class="form-group mb-4">
+                            <label for="expense_date" class="font-semibold text-gray-700">Date of Expense</label>
+                            <input type="date" class="form-control form-control-lg rounded-lg p-3" name="expense_date" value="{{values.date |date:'Y-m-d' }}" required />
+                        </div>
+
+                        <!-- Save Button -->
+                        <button type="submit" class="btn btn-primary btn-lg w-100 py-3 rounded-lg shadow-md">
+                            Save Expense
+                        </button>
+                    </form>
+
+                    <!-- Delete Button -->
+                    <div class="text-center mt-4">
+                        <a href="{% url 'expense-delete' expense.id %}" class="btn btn-danger btn-lg w-100 py-3 rounded-lg shadow-md">
+                            Delete Expense
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

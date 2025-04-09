@@ -1,0 +1,265 @@
+{% extends "base.html" %}
+{% block css %}
+<style>
+    .green {
+        color: green;
+    }
+
+    .red {
+        color: red;
+    }
+
+    .report-section {
+        margin-bottom: 30px;
+    }
+
+    .table-container {
+        width: 50%;
+        margin: 0 auto;
+    }
+
+    .chart-container {
+        width: 50%;
+        margin: 0 auto;
+        padding-left: 20px;
+    }
+
+    /* Align form and chart */
+    .report-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 20px;
+    }
+
+    .form-container {
+        width: 48%;
+    }
+
+    .table, .chart-container {
+        width: 100%;
+    }
+
+    /* Table styling */
+    .table {
+        width: 100%;
+        margin-top: 20px;
+        color: #212529;
+        border-collapse: collapse;
+    }
+
+    .table th,
+    .table td {
+        padding: 0.75rem;
+        text-align: left;
+        border-top: 1px solid #ddd;
+        border-bottom: 1px solid #ddd;
+    }
+
+    .table th {
+        background-color: #f3f4f6;
+        font-weight: bold;
+    }
+
+    .table tbody tr:hover {
+        background-color: #f0f4f8;
+        cursor: pointer;
+    }
+
+    .table-striped tbody tr:nth-of-type(odd) {
+        background-color: #f9fafb;
+    }
+
+    /* Button styling */
+    .btn {
+        padding: 0.5rem 1rem;
+        border-radius: 0.25rem;
+        color: white;
+        text-decoration: none;
+        font-weight: bold;
+        transition: background-color 0.2s ease-in-out;
+    }
+
+    .btn-primary {
+        background-color: #4f46e5;
+    }
+
+    .btn-primary:hover {
+        background-color: #4338ca;
+    }
+
+    .btn-green {
+        background-color: #10b981;
+    }
+
+    .btn-green:hover {
+        background-color: #059669;
+    }
+
+    .btn-blue {
+        background-color: #3b82f6;
+    }
+
+    .btn-blue:hover {
+        background-color: #2563eb;
+    }
+
+    .btn-yellow {
+        background-color: #facc15;
+    }
+
+    .btn-yellow:hover {
+        background-color: #eab308;
+    }
+
+    .chart-container {
+        height: 400px;
+    }
+</style>
+{% endblock css %}
+
+{% block content %}
+<div class="container m-3">
+    <h1 class="text-3xl font-semibold mb-5">Income-Expense Report</h1>
+
+    <!-- Error Messages -->
+    {% if messages %}
+    <div class="alert alert-danger mb-4">
+        {% for message in messages %}
+        <p>{{ message }}</p>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Date Range Form -->
+    <form method="post" action="{% url 'generate-report' %}" class="mb-5">
+        {% csrf_token %}
+        <div class="form-row mb-4">
+            <div class="form-group col-md-6">
+                <label for="start_date">Start Date:</label>
+                <input type="date" name="start_date" class="form-control rounded border-2 p-2" required>
+            </div>
+            <div class="form-group col-md-6">
+                <label for="end_date">End Date:</label>
+                <input type="date" name="end_date" class="form-control rounded border-2 p-2" required>
+            </div>
+        </div>
+        <button type="submit" id="generate-report" class="btn btn-primary">
+            Generate Report
+        </button>
+    </form>
+
+    <div class="report-row">
+        <!-- Table Section -->
+        <div class="table-container">
+            {% if incomes %}
+            <h2 class="text-xl font-semibold">Total Income:</h2>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Source</th>
+                        <th>Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for income in incomes %}
+                    <tr>
+                        <td>{{ income.date }}</td>
+                        <td>{{ income.source }}</td>
+                        <td>{{ currency }} {{ income.amount }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% endif %}
+
+            {% if expenses %}
+            <h2 class="text-xl font-semibold">Total Expenses:</h2>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Category</th>
+                        <th>Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for expense in expenses %}
+                    <tr>
+                        <td>{{ expense.date }}</td>
+                        <td>{{ expense.category }}</td>
+                        <td>{{ currency }} {{ expense.amount }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% endif %}
+        </div>
+
+        <!-- Chart Section -->
+        <div class="chart-container">
+            <canvas id="incomeExpenseChart"></canvas>
+        </div>
+    </div>
+
+    {% if total_income is not None and total_expense is not None %}
+    <div class="report-section">
+        <h2 class="text-xl font-semibold">Savings:</h2>
+        <p>Total Income: {{ currency }} {{ total_income }}</p>
+        <p>Total Expenses: {{ currency }} {{ total_expense }}</p>
+        <p>Total Savings: {{ currency }} {% if savings < 0 %} 0 {%else%} {{ savings }} {% endif %}</p>
+
+        {% if savings > 0 %}
+        <p class="green">You saved money this period.</p>
+        {% elif savings == 0 %}
+        <p class="green">Your income and expenses balanced.</p>
+        {% else %}
+        <p class="red">You exceeded your Expenses than your income this period.</p>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Export Options -->
+    {% if report_generated %}
+    <div class="report-section">
+        <h2 class="text-xl font-semibold mt-5">Export Options:</h2>
+        <br>
+        <div class="space-x-3">
+            <a href="{% url 'export_pdf' %}?start_date={{ start_date }}&end_date={{ end_date }}"
+                class="btn btn-green">Export as PDF</a>
+            <a href="{% url 'export_csv' %}?start_date={{ start_date }}&end_date={{ end_date }}"
+                class="btn btn-blue">Export as CSV</a>
+            <a href="{% url 'export_xlsx' %}?start_date={{ start_date }}&end_date={{ end_date }}"
+                class="btn btn-yellow">Export as XLSX</a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    var ctx = document.getElementById('incomeExpenseChart').getContext('2d');
+    var incomeExpenseChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Income', 'Expenses'],
+            datasets: [{
+                label: 'Amount ({{ currency }})',
+                data: [{{ total_income }}, {{ total_expense }}],
+                backgroundColor: ['#4CAF50', '#FF6347'],
+                borderColor: ['#4CAF50', '#FF6347'],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+</script>
+
+{% endblock content %}

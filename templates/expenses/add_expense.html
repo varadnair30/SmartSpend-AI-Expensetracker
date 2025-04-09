@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<!-- Add Custom CSS -->
+{% block css %}
+<style>
+    /* Custom styling for the form */
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-control {
+        padding: 0.75rem;
+        border-radius: 8px;
+        font-size: 1rem;
+        border: 1px solid #e1e1e1;
+        width: 100%;
+    }
+
+    .btn-primary {
+        background-color: #4F46E5;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 0.75rem 1.5rem;
+        font-size: 1rem;
+        width: 100%;
+    }
+
+    .btn-primary:hover {
+        background-color: #4338CA;
+    }
+
+    .btn-danger {
+        background-color: #F87171;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 0.75rem 1.5rem;
+        font-size: 1rem;
+        width: 100%;
+    }
+
+    .btn-danger:hover {
+        background-color: #F44336;
+    }
+
+    /* Custom styling for the loading indicator */
+    #loading-indicator {
+        display: inline-block;
+        margin-top: 5px;
+    }
+</style>
+{% endblock css %}
+
+<div class="container mt-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'expenses'%}" class="text-indigo-600">Expenses</a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">Add Expense</li>
+        </ol>
+    </nav>
+
+    <div class="card shadow-lg p-4 rounded-lg">
+        <div class="card-body">
+            <form action="{% url 'add-expenses' %}" method="post" id="expense-form">
+                {% include 'partials/_messages.html'%}
+                {% csrf_token %}
+
+                <!-- Amount Field -->
+                <div class="form-group">
+                    <label for="amount" class="font-semibold text-gray-700">Amount</label>
+                    <input type="number" class="form-control" name="amount" value="{{values.amount}}" placeholder="Enter amount" required />
+                </div>
+
+                <!-- Description Field -->
+                <div class="form-group">
+                    <label for="description" class="font-semibold text-gray-700">Description</label>
+                    <input type="text" class="form-control" name="description" id="description-input" value="{{values.description}}" placeholder="Enter description" required />
+
+                    <!-- Loading indicator -->
+                    <div id="loading-indicator" style="display: none;">
+                        <img class="loader" src="{% static 'img/loader.gif' %}" alt="Loading..." width="25">
+                    </div>
+
+                    <!-- Predicted category display -->
+                    <div id="predicted-category" style="margin-top: 5px;"></div>
+                </div>
+
+                <!-- Category Field -->
+                <div class="form-group">
+                    <label for="category" class="font-semibold text-gray-700">Category</label>
+                    <input type="text" class="form-control" name="category" id="category-input" value="{{values.category}}" placeholder="Enter category" required />
+                </div>
+
+                <!-- Date of Expense Field -->
+                <div class="form-group">
+                    <label for="expense_date" class="font-semibold text-gray-700">Date of Expense</label>
+                    <input type="date" class="form-control" name="expense_date" value="{{values.expense_date}}" required />
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="btn btn-primary">
+                    Submit Expense
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+<!-- Add JavaScript to handle category prediction -->
+{% block js %}
+<script>
+    // Function to predict category based on description
+    function predictCategory() {
+        const description = document.getElementById('description-input').value;
+        if (description) {
+            // Show the loading indicator
+            document.getElementById('loading-indicator').style.display = 'inline';
+
+            // Send a request to the server to predict the category
+            const formData = new FormData();
+            formData.append('description', description);
+            fetch('{% url "predict-category" %}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Hide the loading indicator
+                document.getElementById('loading-indicator').style.display = 'none';
+
+                // Update the category input with the predicted category
+                const categoryInput = document.getElementById('category-input');
+                categoryInput.value = data.predicted_category;
+                categoryInput.style.color = "black";  // Reset color
+
+                // Display the predicted category below the description input
+                const predictedCategoryDiv = document.getElementById('predicted-category');
+                predictedCategoryDiv.innerHTML = `Predicted Category: ${data.predicted_category}`;
+            })
+            .catch(error => {
+                document.getElementById('loading-indicator').style.display = 'none';
+            });
+        }
+    }
+
+    // Function to get the CSRF token from cookies
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+    }
+
+    // Listen for input changes in the description field
+    const descriptionInput = document.getElementById('description-input');
+    descriptionInput.addEventListener('input', predictCategory);
+</script>
+{% endblock js %}

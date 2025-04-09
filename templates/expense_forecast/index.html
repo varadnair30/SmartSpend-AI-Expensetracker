@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="p-6">
+  {% if messages %}
+    {% include 'partials/_messages.html' %}
+  {% else %}
+
+  <h1 class="text-2xl font-bold text-purple-700 dark:text-purple-400 mb-6">
+    Expense Forecast for Next 30 Days
+  </h1>
+
+  <!-- Forecast Table -->
+  <div class="overflow-x-auto mb-8 shadow rounded-lg">
+    <table class="min-w-full border border-gray-200 dark:border-zinc-700 text-sm">
+      <thead class="bg-purple-600 text-white">
+        <tr>
+          <th class="text-left px-4 py-2">Date</th>
+          <th class="text-left px-4 py-2">Forecasted Expenses</th>
+        </tr>
+      </thead>
+      <tbody class="bg-white dark:bg-zinc-900 text-gray-800 dark:text-gray-100 divide-y divide-gray-200 dark:divide-zinc-800">
+        {% for row in forecast_data %}
+        <tr class="hover:bg-purple-50 dark:hover:bg-zinc-800 transition">
+          <td class="px-4 py-2">{{ row.Date }}</td>
+          <td class="px-4 py-2">{{ row.Forecasted_Expenses }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Total Forecasted Expenses -->
+  <h2 class="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-4">
+    Total Predicted Expense at the end of 30 days:
+    <span class="font-bold text-purple-700 dark:text-purple-400">{{ total_forecasted_expenses }}</span>
+  </h2>
+
+  <!-- Category Forecast -->
+  <h2 class="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-4">
+    Total Forecasted Expenses per Category:
+  </h2>
+  <div class="overflow-x-auto mb-8 shadow rounded-lg">
+    <table class="min-w-full border border-gray-200 dark:border-zinc-700 text-sm">
+      <thead class="bg-purple-600 text-white">
+        <tr>
+          <th class="text-left px-4 py-2">Category</th>
+          <th class="text-left px-4 py-2">Total Forecasted Expenses</th>
+        </tr>
+      </thead>
+      <tbody class="bg-white dark:bg-zinc-900 text-gray-800 dark:text-gray-100 divide-y divide-gray-200 dark:divide-zinc-800">
+        {% for category, expenses in category_forecasts.items %}
+        <tr class="hover:bg-purple-50 dark:hover:bg-zinc-800 transition">
+          <td class="px-4 py-2">{{ category }}</td>
+          <td class="px-4 py-2">{{ expenses }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Plot -->
+  <div class="mt-8">
+    <img src="{% static 'img/forecast_plot.png' %}" alt="Expense Forecast Plot" class="rounded-lg shadow-lg w-full h-auto">
+  </div>
+
+  {% endif %}
+</div>
+{% endblock content %}
