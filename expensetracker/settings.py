@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'authentication',
     'userpreferences',
     'userincome',
+    'corsheaders',
     'expense_forecast',
     'rest_framework',
     'api',
@@ -59,6 +60,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',  # Added WhiteNoiseMiddleware
+    'corsheaders.middleware.CorsMiddleware',  # Move this line up here
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -67,6 +69,12 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",  # React frontend URL
+]
+
+CORS_ALLOW_ALL_ORIGINS = True
 ROOT_URLCONF = 'expensetracker.urls'
 
 TEMPLATES = [
@@ -146,7 +154,8 @@ STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),
-    os.path.join(BASE_DIR, 'frontend', 'dist', 'assets'),  # React's static assets
+    os.path.join(BASE_DIR, 'frontend', 'dist', 'assets'), 
+     # React's static assets
 ]
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 

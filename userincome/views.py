@@ -202,6 +202,7 @@ def delete_income(request, id):
     return redirect('income')
 
 
+
 @login_required(login_url='/authentication/login')
 def income_summary(request):
     user = request.user  # Get the logged-in user
@@ -217,14 +218,32 @@ def income_summary(request):
     monthly_income = user.userincome_set.filter(date__month=today.month).aggregate(Sum('amount'))['amount__sum'] or 0
     yearly_income = user.userincome_set.filter(date__year=today.year).aggregate(Sum('amount'))['amount__sum'] or 0
 
+    # Get monthly income data for the chart
+    monthly_income_data = [0] * 12
+    monthly_data = (
+        user.userincome_set
+        .filter(date__year=today.year)
+        .annotate(month=ExtractMonth('date'))
+        .values('month')
+        .annotate(total_income=Sum('amount'))
+        .order_by('month')
+    )
+    
+    for item in monthly_data:
+        month_index = item['month'] - 1  # Convert month to zero-based index
+        monthly_income_data[month_index] = item['total_income']
+
     context = {
         'daily_income': daily_income,
         'weekly_income': weekly_income,
         'monthly_income': monthly_income,
         'yearly_income': yearly_income,
-        # You can add more context data here if needed
+        'currency': UserPreference.objects.get(user=request.user).currency,
+        'monthly_income_data': json.dumps(monthly_income_data),  # Ensure data is passed as JSON string
     }
+    
     return render(request, 'income/dashboard.html', context)
+
 
 # @login_required(login_url='/authentication/login')
 # def income_summary(request):

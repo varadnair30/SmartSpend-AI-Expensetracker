@@ -27,6 +27,11 @@ import datetime
 from .models import ExpenseLimit
 from django.core.mail import send_mail
 from django.conf import settings
+from django.http import JsonResponse
+from .models import Expense
+from django.http import JsonResponse
+import datetime
+from .models import Expense
 data = pd.read_csv('dataset.csv')
 
 # Preprocessing
@@ -236,32 +241,70 @@ def delete_expense(request, id):
 @login_required(login_url='/authentication/login')
 def expense_category_summary(request):
     todays_date = datetime.date.today()
-    six_months_ago = todays_date-datetime.timedelta(days=30*6)
-    expenses = Expense.objects.filter(owner=request.user,
-                                      date__gte=six_months_ago, date__lte=todays_date)
+    six_months_ago = todays_date - datetime.timedelta(days=30*6)
+    expenses = Expense.objects.filter(owner=request.user, date__gte=six_months_ago, date__lte=todays_date)
+    
     finalrep = {}
 
     def get_category(expense):
         return expense.category
+
+    # List of all categories in the selected date range
     category_list = list(set(map(get_category, expenses)))
 
     def get_expense_category_amount(category):
         amount = 0
         filtered_by_category = expenses.filter(category=category)
-
         for item in filtered_by_category:
             amount += item.amount
         return amount
 
-    for x in expenses:
-        for y in category_list:
-            finalrep[y] = get_expense_category_amount(y)
+    # Populate the dictionary with category as key and total amount as value
+    for y in category_list:
+        finalrep[y] = get_expense_category_amount(y)
 
-    return JsonResponse({'expense_category_data': finalrep}, safe=False)
+    return JsonResponse({'expense_category_data': finalrep})  # Properly returning JSON response
+
+
+@login_required(login_url='/authentication/login')
+def expense_summary_data(request):
+    todays_date = datetime.date.today()
+    six_months_ago = todays_date - datetime.timedelta(days=30*6)
+    expenses = Expense.objects.filter(owner=request.user,
+                                      date__gte=six_months_ago, date__lte=todays_date)
+
+    finalrep = {}
+
+    def get_category(expense):
+        return expense.category
+
+    category_list = list(set(map(get_category, expenses)))
+
+    def get_expense_category_amount(category):
+        amount = 0
+        filtered_by_category = expenses.filter(category=category)
+        for item in filtered_by_category:
+            amount += item.amount
+        return amount
+
+    for y in category_list:
+        finalrep[y] = get_expense_category_amount(y)
+
+    # Return the data as a JSON response
+    return JsonResponse({'expense_category_data': finalrep})
+
+
+
 
 @login_required(login_url='/authentication/login')
 def stats_view(request):
-    return render(request, 'expenses/stats.html')
+    expense_data = expense_category_summary(request).content  # .content will give you the JSON data
+    expense_data = json.loads(expense_data)  # Convert byte data to a dictionary
+    return render(request, 'expenses/stats.html', {'summary_data': expense_data})
+
+
+
+
 
 @login_required(login_url='/authentication/login')
 def predict_category(description):
