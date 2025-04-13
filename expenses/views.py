@@ -32,6 +32,7 @@ from .models import Expense
 from django.http import JsonResponse
 import datetime
 from .models import Expense
+from django.db.models import Sum
 data = pd.read_csv('dataset.csv')
 
 # Preprocessing
@@ -264,6 +265,26 @@ def expense_category_summary(request):
         finalrep[y] = get_expense_category_amount(y)
 
     return JsonResponse({'expense_category_data': finalrep})  # Properly returning JSON response
+
+
+
+@login_required(login_url='/authentication/login')
+def expense_summary(request):
+    user = request.user
+
+    # Fetching categories and their corresponding total expenses for the logged-in user
+    categories = Expense.objects.filter(owner=user).values('category').annotate(total_amount=Sum('amount'))
+
+    # Calculate total expenses for quick summary
+    total_expenses = categories.aggregate(total=Sum('total_amount'))['total'] or 0
+
+    context = {
+        'categories': categories,  # This will be a list of dictionaries containing category and total_amount
+        'total_expenses': total_expenses,  # Total of all expenses
+    }
+
+    return render(request, 'income/stats.html', context)
+
 
 
 @login_required(login_url='/authentication/login')
