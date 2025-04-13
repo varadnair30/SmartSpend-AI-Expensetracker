@@ -2,109 +2,168 @@
 {% block css %}
 <style>
     .container {
-        height: 100vh;
         width: 80%;
         margin: auto;
         display: flex;
         justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        padding-top: 20px;
     }
 
-    .form {
-        height: 100%;
-        width: 50%;
+    .form, .form1 {
+        width: 48%;
         padding: 20px;
-        margin: 5%;
-
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        background-color: #fff;
+        margin-bottom: 20px;
     }
 
-    .form1 {
-        height: 50%;
-        width: 50%;
-        padding: 20px;
-        margin: 5%;
-        margin-top: 15%;
-
+    .form h3, .form1 h4 {
+        margin-bottom: 15px;
+        font-size: 1.5rem;
+        color: #4A4A4A;
     }
 
-
-    h3 {
-        padding: 20px;
+    .form table {
+        width: 100%;
+        border-collapse: collapse;
     }
 
-    .message {
-        margin-bottom: 30px;
+    .form table p.label {
+        font-weight: bold;
+        margin: 10px 0 5px;
+    }
+
+    .form input[type="submit"] {
+        width: 100%;
         padding: 10px;
-        padding-left: 0;
+        background-color: #007bff;
+        border: none;
+        color: white;
+        font-size: 1rem;
+        border-radius: 5px;
+        cursor: pointer;
     }
 
-    .label {
-        margin-right: 20px;
-        height: auto;
-        min-width: 100px;
-        display: inline-block;
-        margin: auto;
+    .form input[type="submit"]:hover {
+        background-color: #0056b3;
     }
 
-    .danger {
-        margin: 10px;
+    .form1 input[type="text"] {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
     }
 
-    @media (max-width:850px) {
+    .form1 input[type="submit"] {
+        width: 100%;
+        padding: 10px;
+        background-color: #28a745;
+        border: none;
+        color: white;
+        font-size: 1rem;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+    .form1 input[type="submit"]:hover {
+        background-color: #218838;
+    }
+
+    .alert {
+        padding: 15px;
+        margin-bottom: 15px;
+        border-radius: 5px;
+    }
+
+    .alert-danger {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+
+    .sources-list {
+        list-style-type: none;
+        padding: 0;
+    }
+
+    .sources-list li {
+        display: flex;
+        justify-content: space-between;
+        background-color: #f1f1f1;
+        padding: 8px;
+        margin-bottom: 5px;
+        border-radius: 5px;
+    }
+
+    .sources-list li a {
+        color: #dc3545;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+    @media (max-width: 768px) {
         .container {
-            display: block;
+            flex-direction: column;
+            align-items: stretch;
         }
 
-        .form,
-        .form1 {
-            height: 65%;
+        .form, .form1 {
             width: 100%;
-            border: 2px solid red;
+            margin-bottom: 20px;
         }
-
-
     }
 </style>
 {% endblock css %}
 
 {% block content %}
 <div class="container">
-
-    <form action="" class="form" method="post">
-        {% if messages %}
-        <div class="message">
-
-            {% for message in messages %}
-            <div {% if message.tags %} class="alert-{{message.tags}}" {% endif %}>{{message}}</div>
-            {% endfor %}
-        </div>
-
-        {% endif %}
+    <!-- User Details Form -->
+    <div class="form">
         <h3>Welcome {{request.user.username|capfirst}} !</h3>
 
-
-        {% csrf_token %}
-        <table>
-            {% for fm in form %}
-            <p class="label"> {{fm.label_tag}} </p> {{fm}} <span class="alert-danger danger"> {{fm.errors|striptags}}
-            </span><br><br>
-            {% endfor %}
-        </table>
-        <input type="submit" class="btn btn-primary" value="Update">
-
-    </form>
-
-    <div class="form1">
-        <form action="{%url 'addSource'%}" method="POST">
-            {% csrf_token %}
-            <div> Add Income Sources : </div>
-            <input type="text" placeholder="Source" name="Source">
-            <input type="submit" class="btn btn-primary m-2">
-        </form>
-        <div>
-            {% for source in sources %}
-            <li class="list">{{source}} <a href="{%url 'deleteSource' source.id%}"> Delete</a></li>
+        {% if messages %}
+        <div class="alert alert-danger">
+            {% for message in messages %}
+            <div>{{message}}</div>
             {% endfor %}
         </div>
+        {% endif %}
+
+        <form action="" method="post">
+            {% csrf_token %}
+            <table>
+                {% for fm in form %}
+                    <tr>
+                        <td class="label">{{fm.label_tag}}</td>
+                        <td>{{fm}} <span class="alert-danger">{{fm.errors|striptags}}</span></td>
+                    </tr>
+                {% endfor %}
+            </table>
+            <input type="submit" value="Update">
+        </form>
+    </div>
+
+    <!-- Income Sources Section -->
+    <div class="form1">
+        <h4>Add Income Sources :</h4>
+        <form action="{% url 'addSource' %}" method="POST">
+            {% csrf_token %}
+            <input type="text" placeholder="Source" name="Source" required>
+            <input type="submit" value="Submit">
+        </form>
+
+        <ul class="sources-list">
+            {% for source in sources %}
+                <li>
+                    <span>{{source}}</span>
+                    <a href="{% url 'deleteSource' source.id %}">Delete</a>
+                </li>
+            {% endfor %}
+        </ul>
     </div>
 </div>
 {% endblock content %}
