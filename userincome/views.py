@@ -34,6 +34,14 @@ from django.db.models.functions import ExtractMonth
 from datetime import datetime
 # Create your views here.
 
+from django.core.mail import send_mail
+from django.conf import settings
+from django.contrib import messages
+from django.shortcuts import render
+from expenses.models import Expense
+from .models import UserIncome
+from django.db.models import Sum
+
 @login_required(login_url='/authentication/login')
 
 def search_income(request):
@@ -302,10 +310,6 @@ def monthly_income_data(request):
 
 
 
-
-
-
-
 @login_required(login_url='/authentication/login')
 def get_monthly_income(request):
     today = date.today()
@@ -326,9 +330,6 @@ def get_monthly_income(request):
         monthly_data[month] = entry['amount']
 
     return JsonResponse({'monthly_data': monthly_data})
-
-
-
 
 
 def render_to_pdf(template_path, context_dict):
@@ -372,20 +373,19 @@ def report(request):
     report_generated=False
     return render(request, 'income/report.html',{'report_generated':report_generated})
 
+@login_required(login_url='/authentication/login')
 def generate_report(request):
     if request.method == "POST":
         start_date = request.POST.get('start_date')
         end_date = request.POST.get('end_date')
         user = request.user
-        report_generated=True
+        report_generated = True
 
         if start_date > end_date:
             messages.error(request, "Start date cannot be greater than end date.")
             return redirect('report')
 
-        # incomes = UserIncome.objects.filter(date__range=[start_date, end_date])
-        # expenses = Expense.objects.filter(date__range=[start_date, end_date])
-
+        # Fetching income and expenses for the specified date range
         incomes = UserIncome.objects.filter(owner=user, date__range=[start_date, end_date])
         expenses = Expense.objects.filter(owner=user, date__range=[start_date, end_date])
 
@@ -394,6 +394,16 @@ def generate_report(request):
 
         savings = total_income - total_expense
         
+        # Check if total expenses exceed total income
+        if total_expense > total_income:
+            subject = 'Expense Limit Exceeded'
+            message = f'Hello {user.username},\n\nYour expenses for the period from {start_date} to {end_date} have exceeded your total income. Please review your expenses.'
+            from_email = settings.EMAIL_HOST_USER
+            to_email = [user.email]
+            send_mail(subject, message, from_email, to_email, fail_silently=False)
+            messages.warning(request, 'Your expenses have exceeded your total income for the selected period.')
+
+        # Create the context for the report
         context = {
             'incomes': incomes,
             'expenses': expenses,
@@ -402,12 +412,11 @@ def generate_report(request):
             'savings': savings,
             'start_date': start_date,
             'end_date': end_date,
-            'report_generated':report_generated
+            'report_generated': report_generated
         }
 
         return render(request, 'income/report.html', context)
     else:
-        
         return render(request, 'income/report.html')
 
 def export_csv(request):
