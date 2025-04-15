@@ -51,6 +51,16 @@
         display: inline-block;
         margin-top: 5px;
     }
+
+    /* Styling for form cards */
+    .card {
+        margin-top: 20px;
+    }
+
+    .card-body {
+        padding: 30px;
+    }
+
 </style>
 {% endblock css %}
 
@@ -64,6 +74,7 @@
         </ol>
     </nav>
 
+    <!-- Expense Form -->
     <div class="card shadow-lg p-4 rounded-lg">
         <div class="card-body">
             <form action="{% url 'add-expenses' %}" method="post" id="expense-form">
@@ -109,7 +120,51 @@
             </form>
         </div>
     </div>
+
+    <!-- Bill Form -->
+    <div class="card shadow-lg p-4 rounded-lg mt-4">
+        <div class="card-body">
+            <h4 class="font-semibold text-lg mb-4">Add Bill</h4>
+            <form action="{% url 'add-bill' %}" method="post" id="bill-form">
+                {% include 'partials/_messages.html'%}
+                {% csrf_token %}
+
+                <!-- Bill Name Field -->
+                <div class="form-group">
+                    <label for="bill_name" class="font-semibold text-gray-700">Bill Name</label>
+                    <input type="text" name="bill_name" class="form-control" id="bill_name" placeholder="Enter Bill Name" required />
+                </div>
+
+                <!-- Bill Amount Field -->
+                <div class="form-group">
+                    <label for="bill_amount" class="font-semibold text-gray-700">Bill Amount</label>
+                    <input type="number" name="bill_amount" class="form-control" id="bill_amount" placeholder="Enter Bill Amount" required />
+                </div>
+
+                <!-- Due Date Field -->
+                <div class="form-group">
+                    <label for="due_date" class="font-semibold text-gray-700">Due Date</label>
+                    <input type="date" name="due_date" class="form-control" id="due_date" required />
+                </div>
+
+                <!-- Frequency Field -->
+                <div class="form-group">
+                    <label for="frequency" class="font-semibold text-gray-700">Frequency</label>
+                    <select name="frequency" class="form-control" id="frequency">
+                        <option value="Monthly">Monthly</option>
+                        <option value="Yearly">Yearly</option>
+                    </select>
+                </div>
+
+                <!-- Submit Bill Button -->
+                <button type="submit" class="btn btn-primary">
+                    Submit Bill
+                </button>
+            </form>
+        </div>
+    </div>
 </div>
+
 {% endblock content %}
 
 <!-- Add JavaScript to handle category prediction -->

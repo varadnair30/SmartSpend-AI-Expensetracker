@@ -7,12 +7,12 @@ from django.core.paginator import Paginator
 import json
 from django.http import JsonResponse
 from userpreferences.models import UserPreference
-import datetime
 import requests
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from django.contrib.sessions.models import Session
 from datetime import date
+from datetime import datetime
 import requests
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -31,7 +31,7 @@ from django.http import JsonResponse
 from .models import Expense
 from django.http import JsonResponse
 import datetime
-from .models import Expense
+from .models import Expense,Bill
 from django.db.models import Sum
 data = pd.read_csv('dataset.csv')
 
@@ -138,8 +138,8 @@ def add_expense(request):
         response = requests.post(update_url, json={'new_data': new_data})
 
         try:
-            date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
-            today = datetime.date.today()
+            date = datetime.strptime(date_str, '%Y-%m-%d').date()  # Correct date conversion
+            today = datetime.today().date()  # Correct method to get today's date
 
             if date > today:
                 messages.error(request, 'Date cannot be in the future')
@@ -169,6 +169,53 @@ def add_expense(request):
         except ValueError:
             messages.error(request, 'Invalid date format')
             return render(request, 'expenses/add_expense.html', context)
+
+
+from datetime import datetime
+from dateutil.relativedelta import relativedelta  # Import relativedelta
+
+@login_required(login_url='/authentication/login')
+def add_bill(request):
+    if request.method == 'POST':
+        bill_name = request.POST['bill_name']
+        bill_amount = request.POST['bill_amount']
+        due_date = request.POST['due_date']
+        frequency = request.POST['frequency']
+        description = request.POST.get('description', '')  # Optional field
+
+        try:
+            # Convert the due_date string into a datetime object
+            due_date_obj = datetime.strptime(due_date, '%Y-%m-%d').date()
+
+            # Calculate the next due date based on frequency using relativedelta
+            if frequency == 'Monthly':
+                next_due_date = due_date_obj + relativedelta(months=1)  # Add one month
+            elif frequency == 'Yearly':
+                next_due_date = due_date_obj + relativedelta(years=1)  # Add one year
+            else:
+                next_due_date = due_date_obj  # Default to the same due date if frequency is not recognized
+
+            # Create the bill object
+            Bill.objects.create(
+                owner=request.user,
+                name=bill_name,
+                amount=bill_amount,
+                due_date=due_date_obj,
+                frequency=frequency,
+                description=description,
+                next_due_date=next_due_date  # Store the calculated next_due_date
+            )
+
+            messages.success(request, 'Bill added successfully')
+            return redirect('expenses')  # Or redirect as needed
+
+        except Exception as e:
+            messages.error(request, 'Error adding bill: ' + str(e))
+            return redirect('add-bill')  # Redirect to the same page if error
+
+    return render(request, 'expenses/add_expense.html')
+
+
 
 
 @login_required(login_url='/authentication/login')

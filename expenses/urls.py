@@ -17,6 +17,7 @@ urlpatterns = [
     path('stats', views.stats_view,
          name="stats"),
     path('stats/data', views.expense_summary_data, name='expense_summary_data'),
+    path('add-bill/', views.add_bill, name='add-bill'),
     path('set-daily-expense-limit/',views.set_expense_limit,name="set-daily-expense-limit")
 
 ]
