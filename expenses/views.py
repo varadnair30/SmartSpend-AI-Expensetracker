@@ -366,10 +366,12 @@ def delete_bill(request, id):
     # Redirect to the expenses page or wherever you want to show the updated list
     return redirect('expenses')
 
+from datetime import date, timedelta  # Import timedelta directly
+
 @login_required(login_url='/authentication/login')
 def expense_category_summary(request):
-    todays_date = datetime.date.today()
-    six_months_ago = todays_date - datetime.timedelta(days=30*6)
+    todays_date = date.today()  # Use date.today() instead of datetime.date.today()
+    six_months_ago = todays_date - timedelta(days=30*6)  # Use timedelta directly
     expenses = Expense.objects.filter(owner=request.user, date__gte=six_months_ago, date__lte=todays_date)
     
     finalrep = {}
