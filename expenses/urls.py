@@ -18,6 +18,8 @@ urlpatterns = [
          name="stats"),
     path('stats/data', views.expense_summary_data, name='expense_summary_data'),
     path('add-bill/', views.add_bill, name='add-bill'),
+    path('bill-edit/<int:id>/', views.edit_bill, name='bill-edit'),
+    path('bill-delete/<int:id>/', views.delete_bill, name='bill-delete'),
     path('set-daily-expense-limit/',views.set_expense_limit,name="set-daily-expense-limit")
 
 ]

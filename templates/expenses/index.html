@@ -28,7 +28,7 @@
   </div>
 
   <!-- Expenses Table -->
-  <div class="overflow-x-auto rounded shadow">
+  <div class="overflow-x-auto rounded shadow mb-6">
     <table class="min-w-full border border-gray-200 dark:border-zinc-700 divide-y divide-gray-200 dark:divide-zinc-700 text-sm">
       <thead class="bg-purple-600 text-white">
         <tr>
@@ -44,7 +44,7 @@
         </tr>
       </thead>
       <tbody class="bg-white dark:bg-zinc-900 text-gray-800 dark:text-gray-100">
-        {% for expense in page_obj %}
+        {% for expense in page_obj_expenses %}
         <tr class="hover:bg-purple-50 dark:hover:bg-zinc-800 transition">
           <td class="px-4 py-2">{{ expense.amount }}</td>
           <td class="px-4 py-2">{{ expense.category }}</td>
@@ -62,16 +62,50 @@
     </table>
   </div>
 
+  <!-- Bills Table -->
+  <div class="overflow-x-auto rounded shadow mb-6">
+    <table class="min-w-full border border-gray-200 dark:border-zinc-700 divide-y divide-gray-200 dark:divide-zinc-700 text-sm">
+      <thead class="bg-purple-600 text-white">
+        <tr>
+          <th class="px-4 py-2 text-left">Amount ({{currency}})
+            <a href="?sort=amount_asc">⬆️</a> <a href="?sort=amount_desc">⬇️</a>
+          </th>
+          <th class="px-4 py-2 text-left">Bill Name</th>
+          <th class="px-4 py-2 text-left">Description</th>
+          <th class="px-4 py-2 text-left">Due Date
+            <a href="?sort=date_asc">⬆️</a> <a href="?sort=date_desc">⬇️</a>
+          </th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody class="bg-white dark:bg-zinc-900 text-gray-800 dark:text-gray-100">
+        {% for bill in page_obj_bills %}
+        <tr class="hover:bg-purple-50 dark:hover:bg-zinc-800 transition">
+          <td class="px-4 py-2">{{ bill.amount }}</td>
+          <td class="px-4 py-2">{{ bill.name }}</td>
+          <td class="px-4 py-2">{{ bill.description }}</td>
+          <td class="px-4 py-2">{{ bill.due_date }}</td>
+          <td class="px-4 py-2">
+            <a href="{% url 'bill-edit' bill.id %}"
+              class="inline-block px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded text-xs font-semibold transition">
+              Edit
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
   <p class="no-results hidden mt-4 text-red-500">No results</p>
 
-  <!-- Pagination -->
+  <!-- Pagination for Expenses -->
   <div class="mt-6 flex justify-between items-center text-sm">
     <span class="text-gray-600 dark:text-gray-300">
-      Showing page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+      Showing page {{ page_obj_expenses.number }} of {{ page_obj_expenses.paginator.num_pages }}
     </span>
-
     <ul class="flex space-x-2">
-      {% if page_obj.has_previous %}
+      {% if page_obj_expenses.has_previous %}
       <li>
         <a href="?page=1{% if sort_order %}&sort={{ sort_order }}{% endif %}"
           class="px-3 py-1 bg-zinc-200 dark:bg-zinc-800 rounded hover:bg-purple-600 hover:text-white transition">
@@ -79,23 +113,60 @@
         </a>
       </li>
       <li>
-        <a href="?page={{ page_obj.previous_page_number }}{% if sort_order %}&sort={{ sort_order }}{% endif %}"
+        <a href="?page={{ page_obj_expenses.previous_page_number }}{% if sort_order %}&sort={{ sort_order }}{% endif %}"
           class="px-3 py-1 bg-zinc-200 dark:bg-zinc-800 rounded hover:bg-purple-600 hover:text-white transition">
           Previous
         </a>
       </li>
       {% endif %}
-      {% if page_obj.has_next %}
+      {% if page_obj_expenses.has_next %}
       <li>
-        <a href="?page={{ page_obj.next_page_number }}{% if sort_order %}&sort={{ sort_order }}{% endif %}"
+        <a href="?page={{ page_obj_expenses.next_page_number }}{% if sort_order %}&sort={{ sort_order }}{% endif %}"
           class="px-3 py-1 bg-zinc-200 dark:bg-zinc-800 rounded hover:bg-purple-600 hover:text-white transition">
           Next
         </a>
       </li>
       <li>
-        <a href="?page={{ page_obj.paginator.num_pages }}{% if sort_order %}&sort={{ sort_order }}{% endif %}"
+        <a href="?page={{ page_obj_expenses.paginator.num_pages }}{% if sort_order %}&sort={{ sort_order }}{% endif %}"
           class="px-3 py-1 bg-zinc-200 dark:bg-zinc-800 rounded hover:bg-purple-600 hover:text-white transition">
-          {{ page_obj.paginator.num_pages }} &raquo;
+          {{ page_obj_expenses.paginator.num_pages }} &raquo;
+        </a>
+      </li>
+      {% endif %}
+    </ul>
+  </div>
+
+  <!-- Pagination for Bills -->
+  <div class="mt-6 flex justify-between items-center text-sm">
+    <span class="text-gray-600 dark:text-gray-300">
+      Showing page {{ page_obj_bills.number }} of {{ page_obj_bills.paginator.num_pages }}
+    </span>
+    <ul class="flex space-x-2">
+      {% if page_obj_bills.has_previous %}
+      <li>
+        <a href="?page=1{% if sort_order %}&sort={{ sort_order }}{% endif %}"
+          class="px-3 py-1 bg-zinc-200 dark:bg-zinc-800 rounded hover:bg-purple-600 hover:text-white transition">
+          &laquo; 1
+        </a>
+      </li>
+      <li>
+        <a href="?page={{ page_obj_bills.previous_page_number }}{% if sort_order %}&sort={{ sort_order }}{% endif %}"
+          class="px-3 py-1 bg-zinc-200 dark:bg-zinc-800 rounded hover:bg-purple-600 hover:text-white transition">
+          Previous
+        </a>
+      </li>
+      {% endif %}
+      {% if page_obj_bills.has_next %}
+      <li>
+        <a href="?page={{ page_obj_bills.next_page_number }}{% if sort_order %}&sort={{ sort_order }}{% endif %}"
+          class="px-3 py-1 bg-zinc-200 dark:bg-zinc-800 rounded hover:bg-purple-600 hover:text-white transition">
+          Next
+        </a>
+      </li>
+      <li>
+        <a href="?page={{ page_obj_bills.paginator.num_pages }}{% if sort_order %}&sort={{ sort_order }}{% endif %}"
+          class="px-3 py-1 bg-zinc-200 dark:bg-zinc-800 rounded hover:bg-purple-600 hover:text-white transition">
+          {{ page_obj_bills.paginator.num_pages }} &raquo;
         </a>
       </li>
       {% endif %}

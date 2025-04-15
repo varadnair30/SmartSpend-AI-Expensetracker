@@ -66,39 +66,102 @@ def search_expenses(request):
 
 
 @login_required(login_url='/authentication/login')
+def edit_bill(request, id):
+    bill = Bill.objects.get(id=id)
+    if request.method == 'POST':
+        bill_name = request.POST['bill_name']
+        bill_amount = request.POST['bill_amount']
+        due_date = request.POST['due_date']
+        frequency = request.POST['frequency']
+        description = request.POST.get('description', '')  # Optional field
+
+        try:
+            # Convert the due_date string into a datetime object
+            due_date_obj = datetime.strptime(due_date, '%Y-%m-%d').date()
+
+            # Calculate the next due date based on frequency
+            if frequency == 'Monthly':
+                next_due_date = due_date_obj.replace(month=due_date_obj.month + 1)  # Add one month
+            elif frequency == 'Yearly':
+                next_due_date = due_date_obj.replace(year=due_date_obj.year + 1)  # Add one year
+
+            # Update the bill object
+            bill.name = bill_name
+            bill.amount = bill_amount
+            bill.due_date = due_date_obj
+            bill.frequency = frequency
+            bill.description = description
+            bill.next_due_date = next_due_date  # Store the calculated next_due_date
+            bill.save()
+
+            messages.success(request, 'Bill updated successfully')
+            return redirect('expenses')  # Or wherever you want to redirect
+        except Exception as e:
+            messages.error(request, 'Error updating bill: ' + str(e))
+            return redirect('bill-edit', id=id)  # Redirect to the same page if error
+
+    context = {
+        'bill': bill,
+    }
+    return render(request, 'expenses/edit_bill.html', context)
+
+
+@login_required(login_url='/authentication/login')
 def index(request):
     categories = Category.objects.all()
     expenses = Expense.objects.filter(owner=request.user)
+    bills = Bill.objects.filter(owner=request.user)  # Fetch the bills for the logged-in user
 
     sort_order = request.GET.get('sort')
 
+    # Sorting logic for expenses
     if sort_order == 'amount_asc':
         expenses = expenses.order_by('amount')
+        bills = bills.order_by('amount')
     elif sort_order == 'amount_desc':
         expenses = expenses.order_by('-amount')
+        bills = bills.order_by('-amount')
     elif sort_order == 'date_asc':
         expenses = expenses.order_by('date')
+        bills = bills.order_by('due_date')
     elif sort_order == 'date_desc':
         expenses = expenses.order_by('-date')
+        bills = bills.order_by('-due_date')
 
-    paginator = Paginator(expenses, 5)
-    page_number = request.GET.get('page')
-    page_obj = Paginator.get_page(paginator, page_number)
+    # Pagination for expenses
+    paginator_expenses = Paginator(expenses, 5)
+    paginator_bills = Paginator(bills, 5)
+
+    page_number_expenses = request.GET.get('page')
+    page_number_bills = request.GET.get('page_bills')
+
+    page_obj_expenses = paginator_expenses.get_page(page_number_expenses)
+    page_obj_bills = paginator_bills.get_page(page_number_bills)
+
     try:
         currency = UserPreference.objects.get(user=request.user).currency
     except:
-        currency=None
+        currency = None
 
-    total = page_obj.paginator.num_pages
+    # Total number of pages for both expenses and bills
+    total_expenses = page_obj_expenses.paginator.num_pages
+    total_bills = page_obj_bills.paginator.num_pages
+
+    # Prepare context for rendering the template
     context = {
+        'categories': categories,
         'expenses': expenses,
-        'page_obj': page_obj,
+        'bills': bills,  # Add bills to the context
+        'page_obj_expenses': page_obj_expenses,
+        'page_obj_bills': page_obj_bills,  # Add bill page object to context
         'currency': currency,
-        'total': total,
+        'total_expenses': total_expenses,
+        'total_bills': total_bills,  # Add total bill count to context
         'sort_order': sort_order,
-
     }
+
     return render(request, 'expenses/index.html', context)
+
 
 daily_expense_amounts = {}
 
@@ -284,6 +347,23 @@ def delete_expense(request, id):
     expense = Expense.objects.get(pk=id)
     expense.delete()
     messages.success(request, 'Expense removed')
+    return redirect('expenses')
+
+@login_required(login_url='/authentication/login')
+def delete_bill(request, id):
+    try:
+        # Fetch the bill object based on the given id
+        bill = Bill.objects.get(pk=id)
+        bill.delete()  # Delete the bill from the database
+
+        # Display success message
+        messages.success(request, 'Bill removed successfully.')
+
+    except Bill.DoesNotExist:
+        # If the bill doesn't exist, show an error message
+        messages.error(request, 'Bill not found.')
+
+    # Redirect to the expenses page or wherever you want to show the updated list
     return redirect('expenses')
 
 @login_required(login_url='/authentication/login')
