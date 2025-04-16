@@ -3,13 +3,31 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils.timezone import now
 from django.http import HttpResponse
-
+from django.shortcuts import render, redirect
+from .models import UserBudget
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from statsmodels.tsa.arima.model import ARIMA
 from expenses.models import Expense
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from .models import UserBudget
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect
+from .models import UserBudget
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 
+# Add the view for setting the budget
+from django.shortcuts import render, redirect
+from .models import UserBudget
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+
+# expense_forecast/views.py
 
 @login_required(login_url='/authentication/login')
 def forecast(request):
@@ -19,6 +37,11 @@ def forecast(request):
     if len(expenses) < 10:
         messages.error(request, "Not enough expenses to make a forecast. Please add more expenses.")
         return render(request, 'expense_forecast/index.html')
+
+    # Fetch user budget data (for comparison)
+    user_budget = UserBudget.objects.filter(user=request.user, category='').first()
+    category_budgets = UserBudget.objects.filter(user=request.user).exclude(category='')
+    category_budgets_dict = {budget.category: budget.budget_amount for budget in category_budgets}
 
     # Build DataFrame
     data = pd.DataFrame({
@@ -73,6 +96,45 @@ def forecast(request):
         print("⚠️ Category groupby failed:", str(e))
         category_forecasts = {}
 
+    # Calculate monthly average spending and generate AI budget suggestion
+    avg_monthly_expense = total_forecasted_expenses  # This is for 30 days, so it's a monthly forecast
+    
+    # AI budget suggestion calculation (with 10% buffer for unexpected expenses)
+    ai_suggestion = round(avg_monthly_expense * 1.10, 2)  # 10% buffer
+    
+    # Generate category-specific budget suggestions
+    category_suggestions = {}
+    for category, forecasted_amount in category_forecasts.items():
+        # Add 10% buffer to category forecast
+        category_suggestions[category] = round(forecasted_amount * 1.10, 2)
+
+    # Compare forecasted expenses with user budgets and generate suggestions
+    budget_comparison = {}
+    for category, forecasted_expense in category_forecasts.items():
+        if category in category_budgets_dict:
+            budget_amount = category_budgets_dict[category]
+            if forecasted_expense > budget_amount:
+                budget_comparison[category] = {
+                    'forecasted': forecasted_expense,
+                    'budget': budget_amount,
+                    'status': 'Over Budget',
+                    'suggestion': category_suggestions.get(category, 0)
+                }
+            else:
+                budget_comparison[category] = {
+                    'forecasted': forecasted_expense,
+                    'budget': budget_amount,
+                    'status': 'Under Budget',
+                    'suggestion': category_suggestions.get(category, 0)
+                }
+        else:
+            budget_comparison[category] = {
+                'forecasted': forecasted_expense,
+                'budget': 'No Budget Set',
+                'status': 'No Budget Set',
+                'suggestion': category_suggestions.get(category, 0)
+            }
+
     # Plot the forecast
     try:
         plt.figure(figsize=(10, 6))
@@ -96,7 +158,55 @@ def forecast(request):
         'forecast_data': forecast_data_list,
         'total_forecasted_expenses': total_forecasted_expenses,
         'category_forecasts': category_forecasts,
-        'plot_file': plot_file
+        'plot_file': plot_file,
+        'budget_comparison': budget_comparison,
+        'user_budget': user_budget,
+        'ai_suggestion': ai_suggestion,
+        'category_suggestions': category_suggestions
     }
 
     return render(request, 'expense_forecast/index.html', context)
+
+@login_required(login_url='/authentication/login')
+def set_budget(request):
+    if request.method == 'POST':
+        try:
+            # Use empty string for overall budget instead of None
+            category = request.POST.get('category', '')
+            # Leave category as an empty string for overall budget
+            
+            budget_amount = request.POST.get('budget_amount')
+            if not budget_amount:
+                messages.error(request, "Please enter a budget amount.")
+                return redirect('forecast')
+                
+            frequency = request.POST.get('frequency', 'Monthly')
+            
+            # Create or update the budget record
+            user_budget, created = UserBudget.objects.update_or_create(
+                user=request.user,
+                category=category,  # Empty string for overall budget
+                defaults={'budget_amount': budget_amount, 'frequency': frequency}
+            )
+
+            if created:
+                msg = f"{'Category' if category else 'Overall'} budget set successfully!"
+            else:
+                msg = f"{'Category' if category else 'Overall'} budget updated successfully!"
+                
+            messages.success(request, msg)
+            return redirect('forecast')
+            
+        except Exception as e:
+            messages.error(request, f"Error setting budget: {str(e)}")
+            return redirect('forecast')
+    else:
+        # Get existing budgets to display
+        overall_budget = UserBudget.objects.filter(user=request.user, category='').first()
+        category_budgets = UserBudget.objects.filter(user=request.user).exclude(category='')
+        
+        context = {
+            'overall_budget': overall_budget,
+            'category_budgets': category_budgets
+        }
+        return render(request, 'expense_forecast/set_budget.html', context)

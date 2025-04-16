@@ -280,7 +280,7 @@ def add_bill(request):
 
 
 
-
+from datetime import datetime
 @login_required(login_url='/authentication/login')
 def expense_edit(request, id):
     expense = Expense.objects.get(pk=id)
@@ -290,8 +290,10 @@ def expense_edit(request, id):
         'values': expense,
         'categories': categories
     }
+
     if request.method == 'GET':
         return render(request, 'expenses/edit-expense.html', context)
+
     if request.method == 'POST':
         amount = request.POST['amount']
         date_str = request.POST.get('expense_date')
@@ -299,26 +301,28 @@ def expense_edit(request, id):
         if not amount:
             messages.error(request, 'Amount is required')
             return render(request, 'expenses/edit-expense.html', context)
+        
         description = request.POST['description']
         date = request.POST['expense_date']
         category = request.POST['category']
 
         if not description:
-            messages.error(request, 'description is required')
+            messages.error(request, 'Description is required')
             return render(request, 'expenses/edit-expense.html', context)
 
         try:
             # Convert the date string to a datetime object and validate the date
-            date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
-            today = datetime.date.today()
+            date = datetime.strptime(date_str, '%Y-%m-%d').date()  # Correct this line
+            today = datetime.today().date()  # Corrected method call for today's date
 
             if date > today:
                 messages.error(request, 'Date cannot be in the future')
-                return render(request, 'expenses/add_expense.html', context)
+                return render(request, 'expenses/edit-expense.html', context)
 
+            # Update the expense fields
             expense.owner = request.user
             expense.amount = amount
-            expense. date = date
+            expense.date = date  # Corrected field name from 'expense.date'
             expense.category = category
             expense.description = description
 
@@ -326,9 +330,10 @@ def expense_edit(request, id):
             messages.success(request, 'Expense saved successfully')
 
             return redirect('expenses')
+
         except ValueError:
             messages.error(request, 'Invalid date format')
-            return render(request, 'expenses/edit_income.html', context)
+            return render(request, 'expenses/edit-expense.html', context)
 
         # expense.owner = request.user
         # expense.amount = amount

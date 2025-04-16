@@ -11,7 +11,108 @@
     Expense Forecast for Next 30 Days
   </h1>
 
-  <!-- Forecast Table -->
+  <!-- Enhanced Budgeting Assistance Section -->
+  <div class="mb-8 p-4 bg-purple-50 dark:bg-zinc-800 rounded-lg shadow">
+    <h2 class="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-4">
+      Budgeting Assistance
+    </h2>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <!-- Overall Budget Card -->
+      <div class="bg-white dark:bg-zinc-900 p-4 rounded-lg shadow">
+        <h3 class="text-lg font-semibold text-purple-700 dark:text-purple-400 mb-2">
+          Set Your Monthly Budget
+        </h3>
+        
+        <form action="{% url 'set-budget' %}" method="POST">
+          {% csrf_token %}
+          {% include 'partials/_messages.html' %}
+          
+          <div class="form-group mb-3">
+            <label for="budget_amount" class="block mb-1">Monthly Budget Amount:</label>
+            <input type="number" name="budget_amount" id="budget_amount" class="form-control w-full" 
+                  value="{% if user_budget %}{{ user_budget.budget_amount }}{% elif current_budget %}{{ current_budget }}{% endif %}" required />
+          </div>
+
+          <!-- Add this hidden field to indicate it's an overall budget -->
+          <input type="hidden" name="category" value="">
+          <input type="hidden" name="frequency" value="Monthly">
+
+          <button type="submit" class="btn btn-primary w-full">Set Budget</button>
+        </form>
+        
+        {% if user_budget %}
+        <h3 class="mt-4 text-lg font-semibold text-gray-700 dark:text-gray-300">
+          Your Current Monthly Budget: 
+          <span class="text-purple-700 dark:text-purple-400">${{ user_budget.budget_amount }}</span>
+        </h3>
+        
+        <div class="mt-2">
+          <p class="text-sm text-gray-600 dark:text-gray-400">Forecasted Monthly Expenses:</p>
+          <p class="text-lg font-bold {% if total_forecasted_expenses > user_budget.budget_amount %}text-red-600{% else %}text-green-600{% endif %}">
+            ${{ total_forecasted_expenses }}
+          </p>
+        </div>
+        {% endif %}
+        
+        {% if ai_suggestion %}
+        <div class="mt-4 p-3 bg-green-50 dark:bg-green-900/20 rounded border border-green-200 dark:border-green-800">
+          <p class="text-sm text-gray-700 dark:text-gray-300">AI-Powered Suggested Budget:</p>
+          <p class="text-lg font-bold text-green-700 dark:text-green-400">${{ ai_suggestion }}</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400">Based on your spending patterns with a safety buffer</p>
+        </div>
+        {% endif %}
+      </div>
+      
+      <!-- Category Budget Summary -->
+      <div class="bg-white dark:bg-zinc-900 p-4 rounded-lg shadow">
+        <h3 class="text-lg font-semibold text-purple-700 dark:text-purple-400 mb-2">
+          Category Budget Summary
+        </h3>
+        
+        {% if budget_comparison %}
+  <div class="text-sm mb-2">
+    <table class="min-w-full">
+      <thead>
+        <tr class="border-b border-gray-200 dark:border-gray-700">
+          <th class="text-left py-2">Category</th>
+          <th class="text-left py-2">Status</th>
+          {% if category_suggestions %}
+          <th class="text-left py-2">Suggestion</th>
+          {% endif %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for category, data in budget_comparison.items %}
+        <tr class="border-b border-gray-100 dark:border-gray-800">
+          <td class="py-2">{{ category }}</td>
+          <td class="py-2">
+            <span class="{% if data.status == 'Over Budget' %}text-red-600{% elif data.status == 'Under Budget' %}text-green-600{% else %}text-gray-600{% endif %}">
+              {{ data.status }}
+            </span>
+          </td>
+          {% if data.suggestion %}
+          <td class="py-2">${{ data.suggestion }}</td>
+          {% endif %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <p class="text-gray-600 dark:text-gray-400">No category data available.</p>
+{% endif %}
+        
+        <div class="mt-4">
+          <a href="{% url 'set-budget' %}" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded inline-block">
+            Manage Category Budgets
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Forecast Table (Unchanged) -->
   <div class="overflow-x-auto mb-8 shadow rounded-lg">
     <table class="min-w-full border border-gray-200 dark:border-zinc-700 text-sm">
       <thead class="bg-purple-600 text-white">
@@ -31,13 +132,13 @@
     </table>
   </div>
 
-  <!-- Total Forecasted Expenses -->
+  <!-- Total Forecasted Expenses (Unchanged) -->
   <h2 class="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-4">
     Total Predicted Expense at the end of 30 days:
     <span class="font-bold text-purple-700 dark:text-purple-400">{{ total_forecasted_expenses }}</span>
   </h2>
 
-  <!-- Category Forecast -->
+  <!-- Category Forecast (Unchanged) -->
   <h2 class="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-4">
     Total Forecasted Expenses per Category:
   </h2>
@@ -60,7 +161,7 @@
     </table>
   </div>
 
-  <!-- Plot -->
+  <!-- Plot (Unchanged) -->
   <div class="mt-8">
     <img src="{% static 'img/forecast_plot.png' %}" alt="Expense Forecast Plot" class="rounded-lg shadow-lg w-full h-auto">
   </div>
